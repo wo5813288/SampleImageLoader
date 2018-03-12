@@ -22,13 +22,16 @@ import okhttp3.Response;
 
 public class HttpUtils {
     private static OkHttpClient okHttpClient ;
-
     private HashMap<String,String> params;
     private String url;
     private HttpResponse httpResponse;
-    private interface HttpResponse{
-        void onSuccess(Object o);
+    public interface HttpResponse{
+        void onSuccess(Response o);
         void onFailure(String str);
+    }
+
+    public HttpUtils(HttpResponse httpResponse) {
+        this.httpResponse = httpResponse;
     }
 
     /**单利模式获取okHttpClient对象
@@ -50,6 +53,10 @@ public class HttpUtils {
     public void sendGet(String url,HashMap<String,String> params){
         sendHttp(url,false,params);
     }
+
+    public void downLoadFile(String url,HashMap<String,String> params){
+        sendGet(url,params);
+    }
     private void sendHttp(String url,boolean isPost,HashMap<String,String> params){
         this.url = url;
         this.params = params;
@@ -70,7 +77,7 @@ public class HttpUtils {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                httpResponse.onSuccess(response.body().string());
+                httpResponse.onSuccess(response);
             }
         });
     }
@@ -95,8 +102,13 @@ public class HttpUtils {
             request = new Request.Builder().url(url).post(builder.build()).build();
         }else{
             //GET请求方式
-            String newUrl = url+"?"+MultpartBodyParam(params);
-            request =new Request.Builder().url(newUrl).build();
+            if(params==null){
+                request =new Request.Builder().url(url).build();
+            }else{
+                String newUrl = url+"?"+MultpartBodyParam(params);
+                request =new Request.Builder().url(newUrl).build();
+            }
+
         }
         return request;
     }
